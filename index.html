@@ -1522,35 +1522,41 @@ button{font-family:inherit;cursor:pointer;}
 &lt;html lang=&quot;ko&quot;&gt;
 &lt;head&gt;
     &lt;meta charset=&quot;UTF-8&quot;&gt;
-    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot;&gt;
+    &lt;!-- 모바일 폼 입력 시 자동 확대 방지를 위해 maximum-scale=1.0, user-scalable=no 추가 --&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;&gt;
     &lt;title&gt;방탈출: 건물 높이의 비밀&lt;/title&gt;
     &lt;script src=&quot;https://cdn.tailwindcss.com&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js&quot;&gt;&lt;/script&gt;
     
     &lt;style&gt;
-        * { box-sizing: border-box; }
-        html, body {
+        body {
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* 모바일에서 전체 스크롤 방지 */
             font-family: &#x27;Inter&#x27;, sans-serif;
             background-color: #1a202c;
-            height: 100%;
-        }
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            display: block;
         }
         
-        /* UI Panel Styling for Light Theme */
+        #main-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: row; /* 데스크탑 기본: 행 방향 */
+        }
+
+        #canvas-container {
+            position: relative;
+            flex: 1; /* 데스크탑에서 전체 화면 차지 */
+            height: 100%;
+            overflow: hidden;
+        }
+        
         #ui-panel {
             position: absolute;
             top: 20px;
             right: 20px;
             width: 350px;
-            max-width: calc(100vw - 40px);
             background: rgba(255, 255, 255, 0.95);
             padding: 24px;
             border-radius: 16px;
@@ -1558,73 +1564,22 @@ button{font-family:inherit;cursor:pointer;}
             backdrop-filter: blur(10px);
             color: #1e293b;
             z-index: 10;
-            max-height: calc(100vh - 40px);
-            max-height: calc(100dvh - 40px);
-            overflow-y: auto;
-        }
-        #panel-toggle {
-            display: none;
-        }
-        #panel-body {
-            overflow: hidden;
         }
 
-        /* ---- Mobile layout: bottom sheet ---- */
-        @media (max-width: 767px) {
-            #ui-panel {
-                top: auto;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                max-width: 100%;
-                border-radius: 18px 18px 0 0;
-                padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
-                max-height: 62vh;
-                max-height: 62dvh;
-            }
-            #ui-panel.panel-collapsed {
-                max-height: none;
-            }
-            #ui-panel.panel-collapsed #panel-body {
-                display: none;
-            }
-            #panel-toggle {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 30px;
-                height: 30px;
-                border-radius: 8px;
-                background: #f1f5f9;
-                border: 1px solid #cbd5e1;
-                color: #475569;
-                flex: 0 0 auto;
-                padding: 0;
-                font-size: 0.8rem;
-                transition: transform 0.2s;
-            }
-            #ui-panel.panel-collapsed #panel-toggle svg {
-                transform: rotate(180deg);
-            }
-            #ui-panel h2 { font-size: 1.05rem; }
-            .slider-container { margin-bottom: 14px; }
-            #info-panel {
-                bottom: auto;
-                top: 12px;
-                left: 12px;
-                max-width: 62vw;
-                font-size: 0.72rem;
-                padding: 10px 12px;
-            }
-            #info-panel ul { margin-bottom: 4px; }
-            #trig-btn span.trig-btn-label { display: none; }
-            #trig-btn { padding: 8px; }
+        #info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-width: 300px;
+            pointer-events: none;
+            z-index: 10;
         }
-        @media (max-width: 767px) and (max-height: 560px) {
-            #ui-panel { max-height: 78vh; max-height: 78dvh; }
-            #info-panel { display: none; }
-        }
+
         .slider-container {
             margin-bottom: 20px;
         }
@@ -1655,7 +1610,6 @@ button{font-family:inherit;cursor:pointer;}
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
-        /* Escape Room Specific Styles */
         #mission-panel {
             margin-top: 20px;
             padding-top: 15px;
@@ -1666,9 +1620,6 @@ button{font-family:inherit;cursor:pointer;}
             flex-direction: column;
             gap: 10px;
             margin-top: 10px;
-        }
-        .input-group button {
-            width: 100%;
         }
         input[type=number] {
             flex: 1;
@@ -1702,55 +1653,6 @@ button{font-family:inherit;cursor:pointer;}
             transform: translateY(2px);
         }
         
-        #message-box {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.88);
-            border: 2px solid #ef4444;
-            color: white;
-            padding: 18px clamp(18px, 5vw, 30px);
-            border-radius: 12px;
-            font-size: clamp(0.95rem, 3.4vw, 1.1rem);
-            font-weight: bold;
-            z-index: 50;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-            width: min(400px, 88vw);
-            line-height: 1.5;
-        }
-        
-        #success-overlay {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 100;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-        
-        #info-panel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            max-width: min(300px, 60vw);
-            pointer-events: none;
-            z-index: 10;
-        }
-
         .math-text {
             font-family: &#x27;Times New Roman&#x27;, Times, serif;
             font-style: italic;
@@ -1774,11 +1676,50 @@ button{font-family:inherit;cursor:pointer;}
         #trig-btn:hover {
             background: #f1f5f9;
         }
+
+        #message-box {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.88);
+            border: 2px solid #ef4444;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            z-index: 50;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            max-width: 400px;
+            width: 90%;
+            line-height: 1.5;
+        }
+        
+        #success-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            text-align: center;
+            padding: 20px;
+        }
+
         #trig-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -1787,12 +1728,12 @@ button{font-family:inherit;cursor:pointer;}
         #trig-content {
             background: white;
             border-radius: 12px;
-            width: min(400px, 92vw);
+            width: 90%;
+            max-width: 400px;
             max-height: 80vh;
-            max-height: 80dvh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
             overflow: hidden;
         }
         #trig-header {
@@ -1825,50 +1766,84 @@ button{font-family:inherit;cursor:pointer;}
             z-index: 1;
             color: #475569;
         }
+
+        @media (max-width: 768px) {
+            #main-wrapper {
+                flex-direction: column; /* 세로 분할 */
+            }
+            #canvas-container {
+                flex: none;
+                height: 45vh; /* 3D 화면이 상단 45% 차지 */
+                width: 100%;
+            }
+            #ui-panel {
+                position: relative; /* 화면을 가리지 않고 아래에 안착 */
+                top: 0; right: 0;
+                width: 100%;
+                height: 55vh; /* UI가 하단 55% 차지 */
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+                padding: 15px 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-evenly; /* 스크롤 없이 공간 자동 분배 */
+            }
+            
+            /* 모바일에서 불필요한 마진 제거하여 공간 확보 */
+            .mb-5, .mb-3, .slider-container { margin-bottom: 0 !important; }
+            #mission-panel { margin-top: 0; padding-top: 5px; }
+            
+            /* 타이포그래피 미세 조정 */
+            .text-xl { font-size: 1.15rem; }
+            h3.text-md { font-size: 0.9rem; margin-bottom: 2px; }
+            p.text-sm { font-size: 0.75rem; line-height: 1.3; }
+            .slider-label { font-size: 0.8rem; margin-bottom: 5px; }
+            
+            /* 조작 방법 패널 모바일화 */
+            #info-panel {
+                bottom: 10px;
+                left: 10px;
+                padding: 10px;
+                font-size: 0.75rem;
+                background: rgba(0, 0, 0, 0.4); /* 덜 가리도록 반투명도 조절 */
+            }
+            
+            .trig-table th, .trig-table td {
+                padding: 8px 4px;
+                font-size: 0.85rem;
+            }
+        }
     &lt;/style&gt;
 &lt;/head&gt;
 &lt;body&gt;
-    &lt;div id=&quot;canvas-container&quot;&gt;&lt;/div&gt;
-
-    &lt;div id=&quot;trig-modal&quot;&gt;
-        &lt;div id=&quot;trig-content&quot;&gt;
-            &lt;div id=&quot;trig-header&quot;&gt;
-                &lt;h3 class=&quot;font-bold text-lg text-slate-800&quot;&gt;교과서 삼각비표&lt;/h3&gt;
-                &lt;button id=&quot;trig-close&quot; class=&quot;text-slate-500 hover:text-slate-800 transition-colors&quot;&gt;
-                    &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
-                        &lt;line x1=&quot;18&quot; y1=&quot;6&quot; x2=&quot;6&quot; y2=&quot;18&quot;&gt;&lt;/line&gt;
-                        &lt;line x1=&quot;6&quot; y1=&quot;6&quot; x2=&quot;18&quot; y2=&quot;18&quot;&gt;&lt;/line&gt;
-                    &lt;/svg&gt;
-                &lt;/button&gt;
-            &lt;/div&gt;
-            &lt;div id=&quot;trig-body&quot;&gt;
-                &lt;!-- 테이블이 JS로 생성되어 들어갈 위치 --&gt;
+    &lt;div id=&quot;main-wrapper&quot;&gt;
+        &lt;div id=&quot;canvas-container&quot;&gt;
+            &lt;div id=&quot;info-panel&quot;&gt;
+                &lt;p class=&quot;font-bold mb-1 text-blue-300&quot;&gt;조작 방법&lt;/p&gt;
+                &lt;ul class=&quot;list-disc pl-4 space-y-1 text-gray-200&quot;&gt;
+                    &lt;li class=&quot;hidden md:list-item&quot;&gt;마우스 좌클릭 드래그: 카메라 회전&lt;/li&gt;
+                    &lt;li class=&quot;hidden md:list-item&quot;&gt;마우스 휠: 화면 확대/축소&lt;/li&gt;
+                    &lt;li class=&quot;md:hidden&quot;&gt;터치 드래그: 카메라 회전&lt;/li&gt;
+                    &lt;li class=&quot;md:hidden&quot;&gt;두 손가락: 화면 확대/축소&lt;/li&gt;
+                &lt;/ul&gt;
             &lt;/div&gt;
         &lt;/div&gt;
-    &lt;/div&gt;
 
-    &lt;div id=&quot;ui-panel&quot;&gt;
-        &lt;div class=&quot;flex items-center justify-between mb-3&quot; id=&quot;panel-header&quot;&gt;
-            &lt;h2 class=&quot;text-xl font-bold text-gray-800 flex items-center gap-2&quot;&gt;
-                &lt;span&gt;🔒&lt;/span&gt; 방탈출 미션
-            &lt;/h2&gt;
-            &lt;div style=&quot;display:flex; align-items:center; gap:8px;&quot;&gt;
+        &lt;div id=&quot;ui-panel&quot;&gt;
+            &lt;div class=&quot;flex items-center justify-between mb-3&quot;&gt;
+                &lt;h2 class=&quot;text-xl font-bold text-gray-800 flex items-center gap-2&quot;&gt;
+                    &lt;span&gt;🔒&lt;/span&gt; 방탈출 미션
+                &lt;/h2&gt;
                 &lt;button id=&quot;trig-btn&quot;&gt;
                     &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
                         &lt;rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot; ry=&quot;2&quot;&gt;&lt;/rect&gt;
                         &lt;line x1=&quot;3&quot; y1=&quot;9&quot; x2=&quot;21&quot; y2=&quot;9&quot;&gt;&lt;/line&gt;
                         &lt;line x1=&quot;9&quot; y1=&quot;21&quot; x2=&quot;9&quot; y2=&quot;9&quot;&gt;&lt;/line&gt;
                     &lt;/svg&gt;
-                    &lt;span class=&quot;trig-btn-label&quot;&gt;삼각비표&lt;/span&gt;
-                &lt;/button&gt;
-                &lt;button id=&quot;panel-toggle&quot; aria-label=&quot;패널 접기/펼치기&quot;&gt;
-                    &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
-                        &lt;polyline points=&quot;18 15 12 9 6 15&quot;&gt;&lt;/polyline&gt;
-                    &lt;/svg&gt;
+                    삼각비표
                 &lt;/button&gt;
             &lt;/div&gt;
-        &lt;/div&gt;
-        &lt;div id=&quot;panel-body&quot;&gt;
+            
             &lt;div class=&quot;mb-5 border-l-4 border-blue-500 pl-3&quot;&gt;
                 &lt;h3 class=&quot;text-md font-bold text-blue-700 mb-1&quot;&gt;문제.&lt;/h3&gt;
                 &lt;p class=&quot;text-sm text-gray-600 leading-relaxed&quot;&gt;
@@ -1905,7 +1880,6 @@ button{font-family:inherit;cursor:pointer;}
                 &lt;div class=&quot;text-sm text-gray-600 mb-2 font-medium&quot;&gt;
                     힌트: &lt;span class=&quot;math-text font-bold&quot;&gt;H = h₁ + d × tan(θ)&lt;/span&gt;
                 &lt;/div&gt;
-                &lt;label class=&quot;block text-sm font-semibold text-gray-700 mb-1&quot;&gt;총 건물 높이 입력 (m)&lt;/label&gt;
                 &lt;div class=&quot;input-group&quot;&gt;
                     &lt;input type=&quot;number&quot; id=&quot;user-answer&quot; placeholder=&quot;예: 22.60&quot; step=&quot;0.01&quot;&gt;
                     &lt;button id=&quot;btn-submit&quot;&gt;문 열기&lt;/button&gt;
@@ -1914,22 +1888,30 @@ button{font-family:inherit;cursor:pointer;}
         &lt;/div&gt;
     &lt;/div&gt;
 
-    &lt;div id=&quot;info-panel&quot;&gt;
-        &lt;p class=&quot;font-bold mb-2 text-blue-300&quot;&gt;조작 방법&lt;/p&gt;
-        &lt;ul class=&quot;list-disc pl-4 space-y-1 mb-2&quot;&gt;
-            &lt;li&gt;마우스 좌클릭 + 드래그 : 카메라 회전&lt;/li&gt;
-            &lt;li&gt;마우스 휠 : 화면 확대/축소&lt;/li&gt;
-            &lt;li&gt;마우스 우클릭 + 드래그 : 카메라 이동&lt;/li&gt;
-        &lt;/ul&gt;
+    &lt;div id=&quot;trig-modal&quot;&gt;
+        &lt;div id=&quot;trig-content&quot;&gt;
+            &lt;div id=&quot;trig-header&quot;&gt;
+                &lt;h3 class=&quot;font-bold text-lg text-slate-800&quot;&gt;교과서 삼각비표&lt;/h3&gt;
+                &lt;button id=&quot;trig-close&quot; class=&quot;text-slate-500 hover:text-slate-800 transition-colors&quot;&gt;
+                    &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+                        &lt;line x1=&quot;18&quot; y1=&quot;6&quot; x2=&quot;6&quot; y2=&quot;18&quot;&gt;&lt;/line&gt;
+                        &lt;line x1=&quot;6&quot; y1=&quot;6&quot; x2=&quot;18&quot; y2=&quot;18&quot;&gt;&lt;/line&gt;
+                    &lt;/svg&gt;
+                &lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div id=&quot;trig-body&quot;&gt;
+                &lt;!-- 테이블이 JS로 생성되어 들어갈 위치 --&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
     &lt;/div&gt;
 
     &lt;div id=&quot;message-box&quot;&gt;틀렸습니다!&lt;br&gt;&lt;span class=&quot;text-sm font-normal mt-2 block text-gray-300&quot;&gt;다시 계산해 보세요.&lt;/span&gt;&lt;/div&gt;
 
-    &lt;div id=&quot;success-overlay&quot; style=&quot;padding: 24px;&quot;&gt;
-        &lt;h1 class=&quot;font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-4 drop-shadow-lg&quot; style=&quot;font-size: clamp(1.8rem, 7vw, 3rem); text-align:center;&quot;&gt;
+    &lt;div id=&quot;success-overlay&quot;&gt;
+        &lt;h1 class=&quot;text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-4 drop-shadow-lg&quot;&gt;
             탈출 성공!
         &lt;/h1&gt;
-        &lt;p class=&quot;text-white mb-8 font-bold&quot; style=&quot;font-size: clamp(0.95rem, 3.6vw, 1.25rem); text-align:center; max-width: 90vw;&quot;&gt;정확한 건물의 높이를 구하여 하안중학교 문이 열렸습니다.&lt;/p&gt;
+        &lt;p class=&quot;text-lg md:text-xl text-white mb-8 font-bold&quot;&gt;정확한 건물의 높이를 구하여 하안중학교 문이 열렸습니다.&lt;/p&gt;
         &lt;button id=&quot;btn-next-stage&quot; class=&quot;px-6 py-3 bg-white text-slate-900 rounded-full font-bold hover:bg-slate-200 transition-colors shadow-lg&quot; style=&quot;color: #1e293b;&quot;&gt;
             2단계로 이동하기 ➔
         &lt;/button&gt;
@@ -1939,7 +1921,7 @@ button{font-family:inherit;cursor:pointer;}
         // State variables
         let observerHeight = 1.6;
         let distance = 20.0;
-        let angle = 35; // degrees
+        let angle = 35;
 
         // Escape Room Game State
         let isEscaped = false;
@@ -1952,13 +1934,14 @@ button{font-family:inherit;cursor:pointer;}
         // Three.js setup
         const container = document.getElementById(&#x27;canvas-container&#x27;);
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Sky blue background
+        scene.background = new THREE.Color(0x87CEEB); 
         scene.fog = new THREE.FogExp2(0x87CEEB, 0.005);
 
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // 부모 컨테이너 크기에 맞춰 카메라 초기화 (반응형)
+        const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 1000);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1967,7 +1950,7 @@ button{font-family:inherit;cursor:pointer;}
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don&#x27;t allow going below ground
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; 
         controls.minDistance = 5;
         controls.maxDistance = 150;
         
@@ -1996,7 +1979,7 @@ button{font-family:inherit;cursor:pointer;}
         // Ground
         const groundGeo = new THREE.PlaneGeometry(300, 300);
         const groundMat = new THREE.MeshStandardMaterial({ 
-            color: 0xd2b48c, // Sand color for schoolyard
+            color: 0xd2b48c,
             roughness: 0.9,
             metalness: 0.05
         });
@@ -2023,14 +2006,11 @@ button{font-family:inherit;cursor:pointer;}
         const matRoof = new THREE.MeshStandardMaterial({ color: roofColor, roughness: 0.9 });
 
         const buildingGroup = new THREE.Group();
-        
-        // Building Dimensions
         const bldgWidth = 80;
         const baseHeight = 18;
         const bldgDepth = 15;
         const bldgZ = 0; 
 
-        // Main Building Body
         const leftWingGeo = new THREE.BoxGeometry(25, baseHeight, bldgDepth);
         const leftWing = new THREE.Mesh(leftWingGeo, matWall);
         leftWing.position.set(-20, baseHeight/2, bldgZ);
@@ -2054,7 +2034,6 @@ button{font-family:inherit;cursor:pointer;}
         rightSideBuilding.castShadow = true; rightSideBuilding.receiveShadow = true;
         buildingGroup.add(rightSideBuilding);
 
-        // Center Blue Panel
         const centerWidth = 15;
         const centerHeight = baseHeight + 3;
         const centerPanelGeo = new THREE.BoxGeometry(centerWidth, centerHeight, bldgDepth + 1);
@@ -2063,7 +2042,6 @@ button{font-family:inherit;cursor:pointer;}
         centerPanel.castShadow = true; centerPanel.receiveShadow = true;
         buildingGroup.add(centerPanel);
 
-        // Roofs
         const mainRoofGeo = new THREE.BoxGeometry(bldgWidth, 1, bldgDepth + 1);
         const mainRoof = new THREE.Mesh(mainRoofGeo, matRoof);
         mainRoof.position.set(0, baseHeight + 0.5, bldgZ);
@@ -2078,7 +2056,6 @@ button{font-family:inherit;cursor:pointer;}
         rightSideRoof.position.set(37.5, baseHeight + 0.5, bldgZ + 1);
         buildingGroup.add(rightSideRoof);
 
-        // Entrance Awning (Blue)
         const awningWidth = 18;
         const awningDepth = 8;
         const awningGeo = new THREE.BoxGeometry(awningWidth, 2, awningDepth);
@@ -2096,10 +2073,7 @@ button{font-family:inherit;cursor:pointer;}
             buildingGroup.add(pillar);
         }
 
-        // Main Entrance
         const entranceGroup = new THREE.Group();
-
-        // Entrance platform
         const porchGeo = new THREE.BoxGeometry(14, 0.4, 4);
         const porchMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6 });
         const porch = new THREE.Mesh(porchGeo, porchMat);
@@ -2143,11 +2117,8 @@ button{font-family:inherit;cursor:pointer;}
             ctx.lineWidth = 12;
             ctx.strokeRect(0, 0, 128, 256);
             
-            if (isLeft) {
-                ctx.strokeRect(128 - 6, 0, 6, 256);
-            } else {
-                ctx.strokeRect(0, 0, 6, 256);
-            }
+            if (isLeft) ctx.strokeRect(128 - 6, 0, 6, 256);
+            else ctx.strokeRect(0, 0, 6, 256);
 
             return new THREE.CanvasTexture(canvas);
         }
@@ -2190,7 +2161,6 @@ button{font-family:inherit;cursor:pointer;}
         }
         buildingGroup.add(entranceGroup);
 
-        // Yellow Structures (Trusses)
         function createTruss(xOffset, yOffset, scaleX, scaleY) {
             const trussGroup = new THREE.Group();
             const beamThickness = 0.6;
@@ -2339,7 +2309,6 @@ button{font-family:inherit;cursor:pointer;}
 
         scene.add(observerGroup);
 
-        // Measurement Lines
         const sightLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xe53e3e, linewidth: 3 }));
         const horizontalLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0x4a5568, linewidth: 2, dashSize: 0.5, gapSize: 0.3 }));
         const h1Line = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x3182ce, linewidth: 3 }));
@@ -2352,23 +2321,16 @@ button{font-family:inherit;cursor:pointer;}
 
         const bldgFrontZ = bldgZ + bldgDepth/2;
         
-        // 3D 입체 자물쇠 생성
         const lockGroup = new THREE.Group();
-        
         const bodyGeo = new THREE.BoxGeometry(2, 1.5, 0.8);
-        const bodyMat = new THREE.MeshStandardMaterial({ 
-            color: 0xffd700,
-            metalness: 0.8,
-            roughness: 0.3
-        });
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.3 });
         const lockBody = new THREE.Mesh(bodyGeo, bodyMat);
         lockGroup.add(lockBody);
         
         const keyholeGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.85, 16);
         const keyholeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
         const keyholeTop = new THREE.Mesh(keyholeGeo, keyholeMat);
-        keyholeTop.rotation.x = Math.PI / 2;
-        keyholeTop.position.set(0, 0.1, 0);
+        keyholeTop.rotation.x = Math.PI / 2; keyholeTop.position.set(0, 0.1, 0);
         lockGroup.add(keyholeTop);
         
         const keyholeBottomGeo = new THREE.BoxGeometry(0.15, 0.4, 0.85);
@@ -2377,25 +2339,15 @@ button{font-family:inherit;cursor:pointer;}
         lockGroup.add(keyholeBottom);
 
         const shackleGeo = new THREE.TorusGeometry(0.7, 0.15, 16, 32, Math.PI);
-        const shackleMat = new THREE.MeshStandardMaterial({
-            color: 0xcccccc,
-            metalness: 0.9,
-            roughness: 0.2
-        });
-        const shackle = new THREE.Mesh(shackleGeo, shackleMat);
-        shackle.position.set(0, 0.75, 0);
+        const shackleMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.2 });
+        const shackle = new THREE.Mesh(shackleGeo, shackleMat); shackle.position.set(0, 0.75, 0);
         
         const shackleLegGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.5);
-        const leftLegLock = new THREE.Mesh(shackleLegGeo, shackleMat);
-        leftLegLock.position.set(-0.7, 0.5, 0);
-        const rightLegLock = new THREE.Mesh(shackleLegGeo, shackleMat);
-        rightLegLock.position.set(0.7, 0.5, 0);
+        const leftLegLock = new THREE.Mesh(shackleLegGeo, shackleMat); leftLegLock.position.set(-0.7, 0.5, 0);
+        const rightLegLock = new THREE.Mesh(shackleLegGeo, shackleMat); rightLegLock.position.set(0.7, 0.5, 0);
         
         const shackleGroup = new THREE.Group();
-        shackleGroup.add(shackle);
-        shackleGroup.add(leftLegLock);
-        shackleGroup.add(rightLegLock);
-        
+        shackleGroup.add(shackle); shackleGroup.add(leftLegLock); shackleGroup.add(rightLegLock);
         lockGroup.add(shackleGroup);
         
         lockGroup.position.set(0, 1.8, bldgFrontZ + 0.3);
@@ -2412,8 +2364,6 @@ button{font-family:inherit;cursor:pointer;}
             observerGroup.position.set(0, 0, obsZ);
 
             const eyePos = new THREE.Vector3(0, observerHeight, obsZ);
-            
-            // Math
             const angleRad = THREE.MathUtils.degToRad(angle);
             const calculatedH2 = distance * Math.tan(angleRad);
             const hitPointY = observerHeight + calculatedH2;
@@ -2429,7 +2379,6 @@ button{font-family:inherit;cursor:pointer;}
             h2Line.geometry.setFromPoints([new THREE.Vector3(0, observerHeight, bldgFrontZ + 0.1), new THREE.Vector3(0, hitPointY, bldgFrontZ + 0.1)]);
             distLine.geometry.setFromPoints([new THREE.Vector3(0, 0.1, obsZ), new THREE.Vector3(0, 0.1, bldgFrontZ)]);
 
-            // Angle Arc
             const arcRadius = Math.min(distance * 0.2, 3);
             const arcPoints = [];
             for (let i = 0; i &lt;= angle; i++) {
@@ -2438,7 +2387,6 @@ button{font-family:inherit;cursor:pointer;}
             }
             arcLine.geometry.setFromPoints(arcPoints);
 
-            // Update UI
             const elHeight = document.getElementById(&#x27;val-height&#x27;);
             if (elHeight) elHeight.innerText = observerHeight.toFixed(2) + &#x27; m&#x27;;
             
@@ -2449,15 +2397,13 @@ button{font-family:inherit;cursor:pointer;}
             if (elAngle) elAngle.innerText = angle + &#x27;°&#x27;;
         }
 
-        // 건물 꼭대기(최대 높이)를 가리키는 정확한 최대 각도를 구하는 함수
         function getMaxAngleDeg() {
-            const BUILDING_MAX_HEIGHT = 21.0; // 건물 중앙 부분의 최대 높이 (18 + 3)
+            const BUILDING_MAX_HEIGHT = 21.0; 
             const maxH2 = BUILDING_MAX_HEIGHT - observerHeight;
             const maxAngleRad = Math.atan(maxH2 / distance);
             return Math.floor(THREE.MathUtils.radToDeg(maxAngleRad));
         }
 
-        // 최대 건물 높이에 맞춰 각도 슬라이더 제한 업데이트 함수
         function updateMaxAngle() {
             const maxAngleDeg = getMaxAngleDeg();
             const sliderAngle = document.getElementById(&#x27;slider-angle&#x27;);
@@ -2470,7 +2416,6 @@ button{font-family:inherit;cursor:pointer;}
             }
         }
 
-        // Randomize initial puzzle on load
         window.addEventListener(&#x27;DOMContentLoaded&#x27;, () =&gt; {
             const sliderHeight = document.getElementById(&#x27;slider-height&#x27;);
             if (sliderHeight) {
@@ -2486,7 +2431,6 @@ button{font-family:inherit;cursor:pointer;}
             
             updateMaxAngle();
             
-            // 초기 각도는 최대 각도보다 작게 설정 (사용자가 직접 꼭대기까지 각도를 올리도록 유도)
             const sliderAngle = document.getElementById(&#x27;slider-angle&#x27;);
             if (sliderAngle) {
                 const maxAngleDeg = getMaxAngleDeg();
@@ -2523,101 +2467,62 @@ button{font-family:inherit;cursor:pointer;}
             document.getElementById(&#x27;trig-body&#x27;).innerHTML = html;
         }
 
-        const trigBtn = document.getElementById(&#x27;trig-btn&#x27;);
-        const trigModal = document.getElementById(&#x27;trig-modal&#x27;);
-        const trigClose = document.getElementById(&#x27;trig-close&#x27;);
-
-        const uiPanel = document.getElementById(&#x27;ui-panel&#x27;);
-        const panelToggle = document.getElementById(&#x27;panel-toggle&#x27;);
-        if (panelToggle) {
-            panelToggle.addEventListener(&#x27;click&#x27;, () =&gt; {
-                uiPanel.classList.toggle(&#x27;panel-collapsed&#x27;);
-            });
-        }
-        // 모바일 화면에서는 3D 장면을 먼저 볼 수 있도록 패널을 접은 상태로 시작
-        if (window.matchMedia(&#x27;(max-width: 767px)&#x27;).matches) {
-            uiPanel.classList.add(&#x27;panel-collapsed&#x27;);
-        }
-
-        trigBtn.addEventListener(&#x27;click&#x27;, () =&gt; {
+        document.getElementById(&#x27;trig-btn&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
             generateTrigTable();
-            trigModal.style.display = &#x27;flex&#x27;;
-            
+            const modal = document.getElementById(&#x27;trig-modal&#x27;);
+            modal.style.display = &#x27;flex&#x27;;
             setTimeout(() =&gt; {
                 const row = document.getElementById(`trig-row-${angle}`);
-                if (row) {
-                    row.scrollIntoView({ behavior: &#x27;auto&#x27;, block: &#x27;center&#x27; });
-                }
+                if (row) row.scrollIntoView({ behavior: &#x27;auto&#x27;, block: &#x27;center&#x27; });
             }, 10);
         });
 
-        trigClose.addEventListener(&#x27;click&#x27;, () =&gt; {
-            trigModal.style.display = &#x27;none&#x27;;
+        document.getElementById(&#x27;trig-close&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+            document.getElementById(&#x27;trig-modal&#x27;).style.display = &#x27;none&#x27;;
         });
         
-        trigModal.addEventListener(&#x27;click&#x27;, (e) =&gt; {
-            if (e.target === trigModal) {
-                trigModal.style.display = &#x27;none&#x27;;
-            }
+        document.getElementById(&#x27;trig-modal&#x27;).addEventListener(&#x27;click&#x27;, (e) =&gt; {
+            if (e.target.id === &#x27;trig-modal&#x27;) e.target.style.display = &#x27;none&#x27;;
         });
 
-        const sliderHeight = document.getElementById(&#x27;slider-height&#x27;);
-        if (sliderHeight) {
-            sliderHeight.addEventListener(&#x27;input&#x27;, (e) =&gt; {
-                observerHeight = parseFloat(e.target.value);
-                updateMaxAngle();
-                updateVisuals();
-            });
-        }
+        document.getElementById(&#x27;slider-height&#x27;).addEventListener(&#x27;input&#x27;, (e) =&gt; {
+            observerHeight = parseFloat(e.target.value);
+            updateMaxAngle(); updateVisuals();
+        });
 
-        const sliderDist = document.getElementById(&#x27;slider-distance&#x27;);
-        if (sliderDist) {
-            sliderDist.addEventListener(&#x27;input&#x27;, (e) =&gt; {
-                distance = parseFloat(e.target.value);
-                updateMaxAngle();
-                updateVisuals();
-            });
-        }
+        document.getElementById(&#x27;slider-distance&#x27;).addEventListener(&#x27;input&#x27;, (e) =&gt; {
+            distance = parseFloat(e.target.value);
+            updateMaxAngle(); updateVisuals();
+        });
 
-        const sliderAngle = document.getElementById(&#x27;slider-angle&#x27;);
-        if (sliderAngle) {
-            sliderAngle.addEventListener(&#x27;input&#x27;, (e) =&gt; {
-                angle = parseInt(e.target.value);
-                updateVisuals();
-            });
-        }
+        document.getElementById(&#x27;slider-angle&#x27;).addEventListener(&#x27;input&#x27;, (e) =&gt; {
+            angle = parseInt(e.target.value);
+            updateVisuals();
+        });
 
-        const btnSubmit = document.getElementById(&#x27;btn-submit&#x27;);
-        if (btnSubmit) {
-            btnSubmit.addEventListener(&#x27;click&#x27;, () =&gt; {
-                const inputVal = parseFloat(document.getElementById(&#x27;user-answer&#x27;).value);
-                if (isNaN(inputVal)) {
-                    showMessage(&quot;오류&quot;, &quot;숫자 형태의 값을 입력해주세요!&quot;);
-                    return;
-                }
+        document.getElementById(&#x27;btn-submit&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+            const inputVal = parseFloat(document.getElementById(&#x27;user-answer&#x27;).value);
+            if (isNaN(inputVal)) {
+                showMessage(&quot;오류&quot;, &quot;숫자 형태의 값을 입력해주세요!&quot;);
+                return;
+            }
 
-                const maxAngleDeg = getMaxAngleDeg();
+            const maxAngleDeg = getMaxAngleDeg();
+            if (angle &lt; maxAngleDeg) {
+                showMessage(&quot;각도 설정 필요!&quot;, `올려다보는 각도를 건물 꼭대기(최대 각도: &lt;b&gt;${maxAngleDeg}°&lt;/b&gt;)로 설정한 후 높이를 계산해 주세요!`);
+                return;
+            }
 
-                // 올려다보는 각도가 최대값(건물 꼭대기를 조준한 각도)이 아닌 경우 정답 판정 불가
-                if (angle &lt; maxAngleDeg) {
-                    showMessage(&quot;각도 설정 필요!&quot;, `올려다보는 각도를 건물 꼭대기(최대 각도: &lt;b&gt;${maxAngleDeg}°&lt;/b&gt;)로 설정한 후 건물의 높이를 계산해 주세요!`);
-                    return;
-                }
+            const correctH2 = distance * Math.tan(THREE.MathUtils.degToRad(maxAngleDeg));
+            const correctTotal = observerHeight + correctH2;
 
-                // 최대 각도일 때의 정확한 총 높이 계산
-                const correctH2 = distance * Math.tan(THREE.MathUtils.degToRad(maxAngleDeg));
-                const correctTotal = observerHeight + correctH2;
-
-                if (Math.abs(correctTotal - inputVal) &lt;= 0.1) {
-                    isEscaped = true;
-                    setTimeout(() =&gt; {
-                        document.getElementById(&#x27;success-overlay&#x27;).style.display = &#x27;flex&#x27;;
-                    }, 2500);
-                } else {
-                    showMessage(&quot;틀렸습니다!&quot;, `최대 각도(${maxAngleDeg}°)일 때 삼각비표를 이용해 다시 계산해 보세요.&lt;br&gt;입력한 값: &lt;b&gt;${inputVal.toFixed(2)}m&lt;/b&gt;`);
-                }
-            });
-        }
+            if (Math.abs(correctTotal - inputVal) &lt;= 0.1) {
+                isEscaped = true;
+                setTimeout(() =&gt; { document.getElementById(&#x27;success-overlay&#x27;).style.display = &#x27;flex&#x27;; }, 2500);
+            } else {
+                showMessage(&quot;틀렸습니다!&quot;, `최대 각도(${maxAngleDeg}°)일 때 삼각비표를 이용해 다시 계산해 보세요.&lt;br&gt;입력값: &lt;b&gt;${inputVal.toFixed(2)}m&lt;/b&gt;`);
+            }
+        });
 
         function showMessage(title, sub) {
             const msgBox = document.getElementById(&#x27;message-box&#x27;);
@@ -2626,18 +2531,20 @@ button{font-family:inherit;cursor:pointer;}
             setTimeout(() =&gt; { msgBox.style.display = &#x27;none&#x27;; }, 3500);
         }
         
-        const btnNext = document.getElementById(&#x27;btn-next-stage&#x27;);
-        if (btnNext) {
-            btnNext.addEventListener(&#x27;click&#x27;, () =&gt; {
-                alert(&quot;다음 단계로 이동합니다! (현재 파일에는 1단계만 포함되어 있습니다)&quot;);
-            });
+        document.getElementById(&#x27;btn-next-stage&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+            alert(&quot;다음 단계로 이동합니다! (현재 파일에는 1단계만 포함되어 있습니다)&quot;);
+        });
+
+        // 부모 컨테이너 기준 사이즈 측정 (반응형 대응)
+        function resizeCanvas() {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
         }
 
-        window.addEventListener(&#x27;resize&#x27;, () =&gt; {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        window.addEventListener(&#x27;resize&#x27;, resizeCanvas);
 
         camera.position.set(-25, 10, 45);
         controls.target.set(0, 8, 15);
@@ -2665,8 +2572,12 @@ button{font-family:inherit;cursor:pointer;}
             controls.update();
             renderer.render(scene, camera);
         }
-
-        animate();
+        
+        // 브라우저 렌더링이 완료된 후 사이즈 한번 맞춰주기
+        window.onload = function() {
+            resizeCanvas();
+            animate();
+        };
     &lt;/script&gt;
 
 &lt;style&gt;
