@@ -1488,22 +1488,25 @@ button{font-family:inherit;cursor:pointer;}
 &lt;html lang=&quot;ko&quot;&gt;
 &lt;head&gt;
     &lt;meta charset=&quot;UTF-8&quot;&gt;
-    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot;&gt;
     &lt;title&gt;방탈출: 건물 높이의 비밀&lt;/title&gt;
     &lt;script src=&quot;https://cdn.tailwindcss.com&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js&quot;&gt;&lt;/script&gt;
     &lt;script src=&quot;https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js&quot;&gt;&lt;/script&gt;
     
     &lt;style&gt;
-        body {
+        * { box-sizing: border-box; }
+        html, body {
             margin: 0;
             overflow: hidden;
             font-family: &#x27;Inter&#x27;, sans-serif;
             background-color: #1a202c;
+            height: 100%;
         }
         #canvas-container {
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             display: block;
         }
         
@@ -1513,6 +1516,7 @@ button{font-family:inherit;cursor:pointer;}
             top: 20px;
             right: 20px;
             width: 350px;
+            max-width: calc(100vw - 40px);
             background: rgba(255, 255, 255, 0.95);
             padding: 24px;
             border-radius: 16px;
@@ -1520,6 +1524,72 @@ button{font-family:inherit;cursor:pointer;}
             backdrop-filter: blur(10px);
             color: #1e293b;
             z-index: 10;
+            max-height: calc(100vh - 40px);
+            max-height: calc(100dvh - 40px);
+            overflow-y: auto;
+        }
+        #panel-toggle {
+            display: none;
+        }
+        #panel-body {
+            overflow: hidden;
+        }
+
+        /* ---- Mobile layout: bottom sheet ---- */
+        @media (max-width: 767px) {
+            #ui-panel {
+                top: auto;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 18px 18px 0 0;
+                padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+                max-height: 62vh;
+                max-height: 62dvh;
+            }
+            #ui-panel.panel-collapsed {
+                max-height: none;
+            }
+            #ui-panel.panel-collapsed #panel-body {
+                display: none;
+            }
+            #panel-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                height: 30px;
+                border-radius: 8px;
+                background: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                color: #475569;
+                flex: 0 0 auto;
+                padding: 0;
+                font-size: 0.8rem;
+                transition: transform 0.2s;
+            }
+            #ui-panel.panel-collapsed #panel-toggle svg {
+                transform: rotate(180deg);
+            }
+            #ui-panel h2 { font-size: 1.05rem; }
+            .slider-container { margin-bottom: 14px; }
+            #info-panel {
+                bottom: auto;
+                top: 12px;
+                left: 12px;
+                max-width: 62vw;
+                font-size: 0.72rem;
+                padding: 10px 12px;
+            }
+            #info-panel ul { margin-bottom: 4px; }
+            #trig-btn span.trig-btn-label { display: none; }
+            #trig-btn { padding: 8px; }
+        }
+        @media (max-width: 767px) and (max-height: 560px) {
+            #ui-panel { max-height: 78vh; max-height: 78dvh; }
+            #info-panel { display: none; }
         }
         .slider-container {
             margin-bottom: 20px;
@@ -1603,14 +1673,14 @@ button{font-family:inherit;cursor:pointer;}
             background: rgba(0, 0, 0, 0.88);
             border: 2px solid #ef4444;
             color: white;
-            padding: 20px 30px;
+            padding: 18px clamp(18px, 5vw, 30px);
             border-radius: 12px;
-            font-size: 1.1rem;
+            font-size: clamp(0.95rem, 3.4vw, 1.1rem);
             font-weight: bold;
             z-index: 50;
             text-align: center;
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-            max-width: 400px;
+            width: min(400px, 88vw);
             line-height: 1.5;
         }
         
@@ -1638,7 +1708,7 @@ button{font-family:inherit;cursor:pointer;}
             padding: 15px;
             border-radius: 8px;
             font-size: 0.85rem;
-            max-width: 300px;
+            max-width: min(300px, 60vw);
             pointer-events: none;
             z-index: 10;
         }
@@ -1679,9 +1749,9 @@ button{font-family:inherit;cursor:pointer;}
         #trig-content {
             background: white;
             border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
+            width: min(400px, 92vw);
             max-height: 80vh;
+            max-height: 80dvh;
             display: flex;
             flex-direction: column;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
@@ -1740,59 +1810,68 @@ button{font-family:inherit;cursor:pointer;}
     &lt;/div&gt;
 
     &lt;div id=&quot;ui-panel&quot;&gt;
-        &lt;div class=&quot;flex items-center justify-between mb-3&quot;&gt;
+        &lt;div class=&quot;flex items-center justify-between mb-3&quot; id=&quot;panel-header&quot;&gt;
             &lt;h2 class=&quot;text-xl font-bold text-gray-800 flex items-center gap-2&quot;&gt;
                 &lt;span&gt;🔒&lt;/span&gt; 방탈출 미션
             &lt;/h2&gt;
-            &lt;button id=&quot;trig-btn&quot;&gt;
-                &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
-                    &lt;rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot; ry=&quot;2&quot;&gt;&lt;/rect&gt;
-                    &lt;line x1=&quot;3&quot; y1=&quot;9&quot; x2=&quot;21&quot; y2=&quot;9&quot;&gt;&lt;/line&gt;
-                    &lt;line x1=&quot;9&quot; y1=&quot;21&quot; x2=&quot;9&quot; y2=&quot;9&quot;&gt;&lt;/line&gt;
-                &lt;/svg&gt;
-                삼각비표
-            &lt;/button&gt;
-        &lt;/div&gt;
-        &lt;div class=&quot;mb-5 border-l-4 border-blue-500 pl-3&quot;&gt;
-            &lt;h3 class=&quot;text-md font-bold text-blue-700 mb-1&quot;&gt;문제.&lt;/h3&gt;
-            &lt;p class=&quot;text-sm text-gray-600 leading-relaxed&quot;&gt;
-                각도를 **건물 꼭대기(최대 각도)**로 조절한 뒤, 삼각비표를 이용하여 건물 전체의 높이를 구하여라.&lt;br&gt;
-                &lt;span class=&quot;text-xs text-gray-500&quot;&gt;(반올림하여 소수점 아래 둘째자리까지 입력)&lt;/span&gt;
-            &lt;/p&gt;
-        &lt;/div&gt;
-        
-        &lt;div class=&quot;slider-container&quot;&gt;
-            &lt;div class=&quot;slider-label&quot;&gt;
-                &lt;span&gt;관찰자 키 (&lt;span class=&quot;math-text&quot;&gt;h₁&lt;/span&gt;)&lt;/span&gt;
-                &lt;span id=&quot;val-height&quot; class=&quot;text-blue-600 font-bold&quot;&gt;1.60 m&lt;/span&gt;
+            &lt;div style=&quot;display:flex; align-items:center; gap:8px;&quot;&gt;
+                &lt;button id=&quot;trig-btn&quot;&gt;
+                    &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+                        &lt;rect x=&quot;3&quot; y=&quot;3&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot; ry=&quot;2&quot;&gt;&lt;/rect&gt;
+                        &lt;line x1=&quot;3&quot; y1=&quot;9&quot; x2=&quot;21&quot; y2=&quot;9&quot;&gt;&lt;/line&gt;
+                        &lt;line x1=&quot;9&quot; y1=&quot;21&quot; x2=&quot;9&quot; y2=&quot;9&quot;&gt;&lt;/line&gt;
+                    &lt;/svg&gt;
+                    &lt;span class=&quot;trig-btn-label&quot;&gt;삼각비표&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button id=&quot;panel-toggle&quot; aria-label=&quot;패널 접기/펼치기&quot;&gt;
+                    &lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+                        &lt;polyline points=&quot;18 15 12 9 6 15&quot;&gt;&lt;/polyline&gt;
+                    &lt;/svg&gt;
+                &lt;/button&gt;
             &lt;/div&gt;
-            &lt;input type=&quot;range&quot; id=&quot;slider-height&quot; min=&quot;1.4&quot; max=&quot;2.0&quot; step=&quot;0.01&quot; value=&quot;1.60&quot;&gt;
         &lt;/div&gt;
-        
-        &lt;div class=&quot;slider-container&quot;&gt;
-            &lt;div class=&quot;slider-label&quot;&gt;
-                &lt;span&gt;건물까지 거리 (&lt;span class=&quot;math-text&quot;&gt;d&lt;/span&gt;)&lt;/span&gt;
-                &lt;span id=&quot;val-distance&quot; class=&quot;text-blue-600 font-bold&quot;&gt;20.0 m&lt;/span&gt;
+        &lt;div id=&quot;panel-body&quot;&gt;
+            &lt;div class=&quot;mb-5 border-l-4 border-blue-500 pl-3&quot;&gt;
+                &lt;h3 class=&quot;text-md font-bold text-blue-700 mb-1&quot;&gt;문제.&lt;/h3&gt;
+                &lt;p class=&quot;text-sm text-gray-600 leading-relaxed&quot;&gt;
+                    각도를 **건물 꼭대기(최대 각도)**로 조절한 뒤, 삼각비표를 이용하여 건물 전체의 높이를 구하여라.&lt;br&gt;
+                    &lt;span class=&quot;text-xs text-gray-500&quot;&gt;(반올림하여 소수점 아래 둘째자리까지 입력)&lt;/span&gt;
+                &lt;/p&gt;
             &lt;/div&gt;
-            &lt;input type=&quot;range&quot; id=&quot;slider-distance&quot; min=&quot;5&quot; max=&quot;60&quot; step=&quot;0.5&quot; value=&quot;20.0&quot;&gt;
-        &lt;/div&gt;
-        
-        &lt;div class=&quot;slider-container&quot;&gt;
-            &lt;div class=&quot;slider-label&quot;&gt;
-                &lt;span&gt;올려다보는 각도 (&lt;span class=&quot;math-text&quot;&gt;θ&lt;/span&gt;)&lt;/span&gt;
-                &lt;span id=&quot;val-angle&quot; class=&quot;text-blue-600 font-bold&quot;&gt;35°&lt;/span&gt;
+            
+            &lt;div class=&quot;slider-container&quot;&gt;
+                &lt;div class=&quot;slider-label&quot;&gt;
+                    &lt;span&gt;관찰자 키 (&lt;span class=&quot;math-text&quot;&gt;h₁&lt;/span&gt;)&lt;/span&gt;
+                    &lt;span id=&quot;val-height&quot; class=&quot;text-blue-600 font-bold&quot;&gt;1.60 m&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;input type=&quot;range&quot; id=&quot;slider-height&quot; min=&quot;1.4&quot; max=&quot;2.0&quot; step=&quot;0.01&quot; value=&quot;1.60&quot;&gt;
             &lt;/div&gt;
-            &lt;input type=&quot;range&quot; id=&quot;slider-angle&quot; min=&quot;5&quot; max=&quot;75&quot; step=&quot;1&quot; value=&quot;35&quot;&gt;
-        &lt;/div&gt;
-        
-        &lt;div id=&quot;mission-panel&quot;&gt;
-            &lt;div class=&quot;text-sm text-gray-600 mb-2 font-medium&quot;&gt;
-                힌트: &lt;span class=&quot;math-text font-bold&quot;&gt;H = h₁ + d × tan(θ)&lt;/span&gt;
+            
+            &lt;div class=&quot;slider-container&quot;&gt;
+                &lt;div class=&quot;slider-label&quot;&gt;
+                    &lt;span&gt;건물까지 거리 (&lt;span class=&quot;math-text&quot;&gt;d&lt;/span&gt;)&lt;/span&gt;
+                    &lt;span id=&quot;val-distance&quot; class=&quot;text-blue-600 font-bold&quot;&gt;20.0 m&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;input type=&quot;range&quot; id=&quot;slider-distance&quot; min=&quot;5&quot; max=&quot;60&quot; step=&quot;0.5&quot; value=&quot;20.0&quot;&gt;
             &lt;/div&gt;
-            &lt;label class=&quot;block text-sm font-semibold text-gray-700 mb-1&quot;&gt;총 건물 높이 입력 (m)&lt;/label&gt;
-            &lt;div class=&quot;input-group&quot;&gt;
-                &lt;input type=&quot;number&quot; id=&quot;user-answer&quot; placeholder=&quot;예: 22.60&quot; step=&quot;0.01&quot;&gt;
-                &lt;button id=&quot;btn-submit&quot;&gt;문 열기&lt;/button&gt;
+            
+            &lt;div class=&quot;slider-container&quot;&gt;
+                &lt;div class=&quot;slider-label&quot;&gt;
+                    &lt;span&gt;올려다보는 각도 (&lt;span class=&quot;math-text&quot;&gt;θ&lt;/span&gt;)&lt;/span&gt;
+                    &lt;span id=&quot;val-angle&quot; class=&quot;text-blue-600 font-bold&quot;&gt;35°&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;input type=&quot;range&quot; id=&quot;slider-angle&quot; min=&quot;5&quot; max=&quot;75&quot; step=&quot;1&quot; value=&quot;35&quot;&gt;
+            &lt;/div&gt;
+            
+            &lt;div id=&quot;mission-panel&quot;&gt;
+                &lt;div class=&quot;text-sm text-gray-600 mb-2 font-medium&quot;&gt;
+                    힌트: &lt;span class=&quot;math-text font-bold&quot;&gt;H = h₁ + d × tan(θ)&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;label class=&quot;block text-sm font-semibold text-gray-700 mb-1&quot;&gt;총 건물 높이 입력 (m)&lt;/label&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;input type=&quot;number&quot; id=&quot;user-answer&quot; placeholder=&quot;예: 22.60&quot; step=&quot;0.01&quot;&gt;
+                    &lt;button id=&quot;btn-submit&quot;&gt;문 열기&lt;/button&gt;
+                &lt;/div&gt;
             &lt;/div&gt;
         &lt;/div&gt;
     &lt;/div&gt;
@@ -1808,11 +1887,11 @@ button{font-family:inherit;cursor:pointer;}
 
     &lt;div id=&quot;message-box&quot;&gt;틀렸습니다!&lt;br&gt;&lt;span class=&quot;text-sm font-normal mt-2 block text-gray-300&quot;&gt;다시 계산해 보세요.&lt;/span&gt;&lt;/div&gt;
 
-    &lt;div id=&quot;success-overlay&quot;&gt;
-        &lt;h1 class=&quot;text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-4 drop-shadow-lg&quot;&gt;
+    &lt;div id=&quot;success-overlay&quot; style=&quot;padding: 24px;&quot;&gt;
+        &lt;h1 class=&quot;font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-4 drop-shadow-lg&quot; style=&quot;font-size: clamp(1.8rem, 7vw, 3rem); text-align:center;&quot;&gt;
             탈출 성공!
         &lt;/h1&gt;
-        &lt;p class=&quot;text-xl text-white mb-8 font-bold&quot;&gt;정확한 건물의 높이를 구하여 하안중학교 문이 열렸습니다.&lt;/p&gt;
+        &lt;p class=&quot;text-white mb-8 font-bold&quot; style=&quot;font-size: clamp(0.95rem, 3.6vw, 1.25rem); text-align:center; max-width: 90vw;&quot;&gt;정확한 건물의 높이를 구하여 하안중학교 문이 열렸습니다.&lt;/p&gt;
         &lt;button id=&quot;btn-next-stage&quot; class=&quot;px-6 py-3 bg-white text-slate-900 rounded-full font-bold hover:bg-slate-200 transition-colors shadow-lg&quot; style=&quot;color: #1e293b;&quot;&gt;
             2단계로 이동하기 ➔
         &lt;/button&gt;
@@ -2409,6 +2488,18 @@ button{font-family:inherit;cursor:pointer;}
         const trigBtn = document.getElementById(&#x27;trig-btn&#x27;);
         const trigModal = document.getElementById(&#x27;trig-modal&#x27;);
         const trigClose = document.getElementById(&#x27;trig-close&#x27;);
+
+        const uiPanel = document.getElementById(&#x27;ui-panel&#x27;);
+        const panelToggle = document.getElementById(&#x27;panel-toggle&#x27;);
+        if (panelToggle) {
+            panelToggle.addEventListener(&#x27;click&#x27;, () =&gt; {
+                uiPanel.classList.toggle(&#x27;panel-collapsed&#x27;);
+            });
+        }
+        // 모바일 화면에서는 3D 장면을 먼저 볼 수 있도록 패널을 접은 상태로 시작
+        if (window.matchMedia(&#x27;(max-width: 767px)&#x27;).matches) {
+            uiPanel.classList.add(&#x27;panel-collapsed&#x27;);
+        }
 
         trigBtn.addEventListener(&#x27;click&#x27;, () =&gt; {
             generateTrigTable();
