@@ -121,6 +121,31 @@ button{font-family:inherit;cursor:pointer;}
 .pip{width:22px;height:4px;background:#1b2433;}
 .pip.on{background:var(--blood);}
 .pip.done{background:#35c07c;}
+#pw-pop{
+  display:none;position:absolute;top:calc(100% + 6px);right:14px;z-index:30;
+  width:min(280px,calc(100vw - 28px));
+  background:var(--ink-2);border:1px solid var(--line);border-top:2px solid var(--key);
+  padding:14px 14px 12px;box-shadow:0 14px 30px rgba(0,0,0,.5);
+}
+#pw-pop.on{display:block;}
+#pw-label{margin:0 0 10px;font-size:12px;color:var(--dim);line-height:1.5;}
+#pw-row{display:flex;gap:8px;}
+#pw-input{
+  flex:1;min-width:0;background:#05070d;border:1px solid var(--line);color:var(--chalk);
+  font-size:16px;letter-spacing:.3em;text-align:center;padding:9px 6px;
+}
+#pw-input:focus{border-color:var(--key);}
+#pw-submit{
+  flex:0 0 auto;border:0;background:var(--key);color:#231400;font-weight:800;
+  font-size:13px;padding:0 16px;
+}
+#pw-submit:hover{background:#f8c860;}
+#pw-error{display:none;margin:9px 0 0;font-size:11.5px;color:#ff6b6b;}
+#pw-error.on{display:block;}
+#pw-pop.shake{animation:pwShake .32s;}
+@keyframes pwShake{
+  25%{transform:translateX(-6px);} 75%{transform:translateX(6px);}
+}
 .stage-frame{
   flex:1 1 auto;width:100%;border:0;display:none;background:var(--ink);
 }
@@ -206,7 +231,7 @@ button{font-family:inherit;cursor:pointer;}
   <div class="poster-wrap"><img class="poster" id="poster-title" alt="밤의 하안중학교 정문 — 삼각비의 저주"></div>
   <div class="title-panel">
     <p class="title-brief">
-      야간 자율학습이 끝난 하안중학교. 정문은 잠겼고, 복도 곳곳에 <b>삼각비 문제</b>가 적힌 자물쇠가 걸려 있다.
+      여기는 하안중학교. 정문은 잠겼고, 복도 곳곳에 <b>삼각비 문제</b>가 적힌 자물쇠가 걸려 있다.
       세 개의 자물쇠를 모두 풀어야 학교 밖으로 나갈 수 있다.
     </p>
     <ul class="locks" id="lock-list">
@@ -242,10 +267,19 @@ button{font-family:inherit;cursor:pointer;}
       <span class="bar-no" id="bar-no">1</span>
       <span class="bar-title" id="bar-title">무한의 계단</span>
     </div>
+    <button class="bar-btn" id="btn-pw" title="비밀번호로 이동">🔑</button>
     <button class="bar-btn" id="btn-retry">다시 풀기</button>
     <div class="pips">
       <span class="pip" id="pip1"></span><span class="pip" id="pip2"></span><span class="pip" id="pip3"></span>
     </div>
+  </div>
+  <div id="pw-pop">
+    <p id="pw-label">비밀번호를 입력하면 다음 단계로 이동합니다</p>
+    <div id="pw-row">
+      <input type="password" id="pw-input" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
+      <button id="pw-submit">확인</button>
+    </div>
+    <p id="pw-error">비밀번호가 올바르지 않습니다</p>
   </div>
   <iframe class="stage-frame" id="frame1" data-html="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;ko&quot;&gt;
@@ -2761,6 +2795,7 @@ button{font-family:inherit;cursor:pointer;}
     stage = n;
     if (startedAt === null) startedAt = Date.now();
     veil.classList.remove('on');
+    closePwPop();
     show('stage');
     paintBar();
     loadStage(n, false);
@@ -2790,6 +2825,51 @@ button{font-family:inherit;cursor:pointer;}
     if (e.data && e.data.type === 'STAGE_CLEAR') onClear();
   });
 
+  var SKIP_CODE = '1111';
+  var pwPop = document.getElementById('pw-pop');
+  var pwInput = document.getElementById('pw-input');
+  var pwError = document.getElementById('pw-error');
+
+  function closePwPop(){
+    pwPop.classList.remove('on');
+    pwError.classList.remove('on');
+    pwInput.value = '';
+  }
+
+  document.getElementById('btn-pw').addEventListener('click', function(){
+    pwPop.classList.toggle('on');
+    pwError.classList.remove('on');
+    if (pwPop.classList.contains('on')) {
+      pwInput.value = '';
+      setTimeout(function(){ pwInput.focus(); }, 30);
+    }
+  });
+
+  function trySkip(){
+    if (pwInput.value === SKIP_CODE) {
+      closePwPop();
+      onClear();
+    } else {
+      pwError.classList.add('on');
+      pwPop.classList.remove('shake');
+      void pwPop.offsetWidth;
+      pwPop.classList.add('shake');
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+
+  document.getElementById('pw-submit').addEventListener('click', trySkip);
+  pwInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') trySkip();
+    if (e.key === 'Escape') closePwPop();
+  });
+  document.addEventListener('click', function(e){
+    if (pwPop.classList.contains('on') && !pwPop.contains(e.target) && e.target.id !== 'btn-pw') {
+      closePwPop();
+    }
+  });
+
   document.getElementById('btn-start').addEventListener('click', function(){
     var next = cleared.indexOf(false);
     goStage(next === -1 ? 1 : next + 1);
@@ -2797,10 +2877,12 @@ button{font-family:inherit;cursor:pointer;}
 
   document.getElementById('btn-home').addEventListener('click', function(){
     stage = 0; show('title'); paintLocks();
+    closePwPop();
   });
 
   document.getElementById('btn-retry').addEventListener('click', function(){
     loadStage(stage, true);
+    closePwPop();
   });
 
   document.getElementById('btn-next').addEventListener('click', function(){
