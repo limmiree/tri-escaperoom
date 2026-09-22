@@ -95,6 +95,22 @@ button{font-family:inherit;cursor:pointer;}
 .title-foot{
   margin:12px 0 0;text-align:center;font-size:11.5px;color:#5f6979;
 }
+.id-form{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px;
+}
+.id-form label{
+  display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--dim);letter-spacing:.03em;
+}
+.id-form input{
+  background:rgba(11,16,25,.72);border:1px solid var(--line);color:var(--chalk);
+  font-size:15px;padding:10px 11px;font-family:inherit;
+}
+.id-form input:focus{border-color:var(--key);}
+.id-form input[disabled]{opacity:.55;}
+#id-error{
+  display:none;margin:0 0 10px;font-size:11.5px;color:#ff6b6b;text-align:center;
+}
+#id-error.on{display:block;}
 
 /* ---------- 1~3. 스테이지 ---------- */
 #screen-stage{background:var(--ink-2);}
@@ -254,6 +270,15 @@ button{font-family:inherit;cursor:pointer;}
           <span class="lock-state">잠김</span>
         </li>
     </ul>
+    <div class="id-form" id="id-form">
+      <label>학번
+        <input type="text" id="stu-id" inputmode="numeric" placeholder="예: 30512" maxlength="10" autocomplete="off">
+      </label>
+      <label>이름
+        <input type="text" id="stu-name" placeholder="이름" maxlength="10" autocomplete="off">
+      </label>
+    </div>
+    <p id="id-error">학번과 이름을 모두 입력해야 탈출을 시작할 수 있어요.</p>
     <button class="start-btn" id="btn-start">탈출 시작</button>
     <p class="title-foot">중학교 3학년 · 삼각비 단원 · 특수각 삼각비 표 제공</p>
   </div>
@@ -1773,30 +1798,25 @@ button{font-family:inherit;cursor:pointer;}
             }
             #canvas-container {
                 flex: none;
-                height: 38vh; /* 3D 화면이 상단 영역 차지 */
+                height: 45vh; /* 3D 화면이 상단 45% 차지 */
                 width: 100%;
             }
             #ui-panel {
                 position: relative; /* 화면을 가리지 않고 아래에 안착 */
                 top: 0; right: 0;
                 width: 100%;
-                height: 62vh; /* UI가 하단 영역 차지 */
+                height: 55vh; /* UI가 하단 55% 차지 */
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-                padding: 14px 18px calc(16px + env(safe-area-inset-bottom));
+                padding: 15px 20px;
                 display: flex;
                 flex-direction: column;
-                justify-content: flex-start;
-                gap: 8px;
-                overflow-y: auto; /* 내용이 넘치면 패널 내부에서 스크롤 */
-                -webkit-overflow-scrolling: touch;
+                justify-content: space-evenly; /* 스크롤 없이 공간 자동 분배 */
             }
-            #ui-panel &gt; * { flex: none; }
             
             /* 모바일에서 불필요한 마진 제거하여 공간 확보 */
             .mb-5, .mb-3, .slider-container { margin-bottom: 0 !important; }
             #mission-panel { margin-top: 0; padding-top: 5px; }
-            .input-group { margin-bottom: 4px; }
             
             /* 타이포그래피 미세 조정 */
             .text-xl { font-size: 1.15rem; }
@@ -1817,10 +1837,6 @@ button{font-family:inherit;cursor:pointer;}
                 padding: 8px 4px;
                 font-size: 0.85rem;
             }
-        }
-        @media (max-width: 768px) and (max-height: 620px) {
-            #canvas-container { height: 30vh; }
-            #ui-panel { height: 70vh; }
         }
     &lt;/style&gt;
 &lt;/head&gt;
@@ -2672,9 +2688,30 @@ button{font-family:inherit;cursor:pointer;}
     {no:3, title:'건물 높이의 비밀', clear:'정문이 열렸다',    note:'본관의 높이를 정확히 구하자 마지막 잠금이 풀렸다.'}
   ];
 
+  // ===== 구글 시트 연동 =====
+  // 배포한 Google Apps Script 웹 앱 URL을 아래에 붙여넣으세요.
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbz_wF5Djl6AUyiSy1-NeTb3fyqW_xI2D8QAQjXW_6wk_CDmFgQegbYsRUg1I3OqBd8KxA/exec';
+
+  var studentId = '';
+  var studentName = '';
+
+  function postToSheet(payload){
+    if (!GAS_URL || GAS_URL.indexOf('http') !== 0) return; // URL 미설정 시 전송 생략
+    payload.studentId = studentId;
+    payload.name = studentName;
+    try{
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 프리플라이트(OPTIONS) 회피
+        body: JSON.stringify(payload)
+      }).catch(function(err){ console.warn('시트 전송 실패:', err); });
+    }catch(err){ console.warn('시트 전송 오류:', err); }
+  }
+
   var stage = 0;            // 0 = 대문
   var cleared = [false,false,false];
   var startedAt = null;
+  var stageEnterAt = [null, null, null]; // 각 단계에 처음 진입한 시각
 
   var screens = {
     title: document.getElementById('screen-title'),
@@ -2718,6 +2755,7 @@ button{font-family:inherit;cursor:pointer;}
   function goStage(n){
     stage = n;
     if (startedAt === null) startedAt = Date.now();
+    if (stageEnterAt[n-1] === null) stageEnterAt[n-1] = Date.now();
     veil.classList.remove('on');
     closePwPop();
     show('stage');
@@ -2743,6 +2781,16 @@ button{font-family:inherit;cursor:pointer;}
     document.getElementById('veil-p').textContent = m.note;
     document.getElementById('btn-next').textContent = (stage < 3) ? '다음 자물쇠로' : '학교 밖으로 나가기';
     setTimeout(function(){ veil.classList.add('on'); }, 700);
+
+    // ---- 구글 시트로 단계별 소요 시간 전송 ----
+    var now = Date.now();
+    var enterAt = stageEnterAt[stage-1] || startedAt || now;
+    var stageSeconds = Math.max(0, Math.round((now - enterAt) / 1000));
+    var payload = { stage: stage, stageSeconds: stageSeconds };
+    if (stage === 3) {
+      payload.totalSeconds = Math.max(0, Math.round((now - startedAt) / 1000));
+    }
+    postToSheet(payload);
   }
 
   window.addEventListener('message', function(e){
@@ -2794,7 +2842,25 @@ button{font-family:inherit;cursor:pointer;}
     }
   });
 
+  var idForm = document.getElementById('id-form');
+  var idError = document.getElementById('id-error');
+  var stuIdInput = document.getElementById('stu-id');
+  var stuNameInput = document.getElementById('stu-name');
+
   document.getElementById('btn-start').addEventListener('click', function(){
+    var idVal = stuIdInput.value.trim();
+    var nameVal = stuNameInput.value.trim();
+    if (!idVal || !nameVal) {
+      idError.classList.add('on');
+      (idVal ? stuNameInput : stuIdInput).focus();
+      return;
+    }
+    idError.classList.remove('on');
+    studentId = idVal;
+    studentName = nameVal;
+    stuIdInput.disabled = true;
+    stuNameInput.disabled = true;
+
     var next = cleared.indexOf(false);
     goStage(next === -1 ? 1 : next + 1);
   });
@@ -2823,6 +2889,7 @@ button{font-family:inherit;cursor:pointer;}
   document.getElementById('btn-again').addEventListener('click', function(){
     cleared = [false,false,false];
     startedAt = null;
+    stageEnterAt = [null, null, null];
     for (var i = 1; i <= 3; i++) frame(i).removeAttribute('srcdoc');
     paintLocks();
     goStage(1);
@@ -2831,9 +2898,16 @@ button{font-family:inherit;cursor:pointer;}
   document.getElementById('btn-end-home').addEventListener('click', function(){
     cleared = [false,false,false];
     startedAt = null;
+    stageEnterAt = [null, null, null];
     for (var i = 1; i <= 3; i++) frame(i).removeAttribute('srcdoc');
     paintLocks();
     stage = 0;
+    stuIdInput.disabled = false;
+    stuNameInput.disabled = false;
+    stuIdInput.value = '';
+    stuNameInput.value = '';
+    studentId = '';
+    studentName = '';
     show('title');
   });
 })();
